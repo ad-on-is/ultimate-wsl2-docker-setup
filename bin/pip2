@@ -1,0 +1,10 @@
+#!/bin/bash
+TTY="-it"
+PARAMS="$@"
+
+if [[ $# -gt 0 && "$1" == "notty" ]]; then
+    PARAMS="${@:2}"
+    TTY=""
+fi
+docker exec $TTY -w "$PWD" python2 pip $PARAMS
+exit $?

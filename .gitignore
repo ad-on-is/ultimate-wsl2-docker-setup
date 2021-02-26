@@ -1,0 +1,9 @@
+db_data
+.python2
+.python3
+.composer
+.npm-global
+.vscode
+images
+conf
+.DS_Store

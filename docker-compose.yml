@@ -1,0 +1,131 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ~:${HOME}:cached
+      - ./conf/nginx/templates:/etc/nginx/templates:cached
+      - ./conf/nginx/ssl:/etc/nginx/ssl:cached
+      - ./conf/nginx/vhost.common.d:/etc/nginx/vhost.common.d:cached
+    environment:
+      - USER_ROOT=${HOME}
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.conf
+    container_name: nginx
+
+  python2:
+    container_name: python2
+    image: python:2-alpine
+    user: 1000:1000
+    volumes:
+      - ~:${HOME}:cached
+      - ./.python2/lib:/.local/lib/python2.7:cached
+      - ./.python2/pip:/.cache/pip:cached
+    command: ["tail", "-f", "/dev/null"]
+
+  python3:
+    container_name: python3
+    image: python:3-alpine
+    user: 1000:1000
+    volumes:
+      - ~:${HOME}:cached
+      - ./.python3/lib:/.local/lib/python3.9:cached
+      - ./.python3/pip:/.cache/pip:cached
+    command: ["tail", "-f", "/dev/null"]
+
+  php:
+    image: adisdurakovic/php:7.4
+    container_name: php
+    user: 1000:1000
+    environment:
+      - XDEBUG_CONFIG.client_host=192.168.1.100
+    volumes:
+      - ~:${HOME}:cached
+      - ./.composer:/.composer:cached
+
+  nodejs:
+    image: tarampampam/node:alpine
+    container_name: nodejs
+    tty: true
+    user: 1000:1000
+    environment:
+      - NPM_CONFIG_PREFIX=$PWD/.npm-global
+      - PATH=$PATH:$PWD/.npm-global/bin
+    volumes:
+      - ~:${HOME}:cached
+      - ${HOME}/Docker/bin
+      - ./.npm-global:$PWD/.npm-global
+    command: ["tail", "-f", "/dev/null"]
+
+  golang:
+    container_name: golang
+    image: golang:alpine
+    user: 1000:1000
+    volumes:
+      - ~:${HOME}:cached
+      - ${HOME}/Docker/bin
+    command: ["tail", "-f", "/dev/null"]
+
+  #
+  #  DATABASES
+  #
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+      - PGADMIN_LISTEN_PORT=9090
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    user: 1000:1000
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./db_data/mysql:/var/lib/mysql:cached
+      - ./conf/mysql/mysql.cnf:/etc/mysql/conf.d/mysql.cnf:cached
+      - ${HOME}/Docker
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    user: 1000:1000
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - ./db_data/mongo:/data/db:cached
+
+  postgres:
+    image: postgis/postgis
+    container_name: postgres
+    user: 1000:1000
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./db_data/postgres:/var/lib/postgresql/data:cached
+      - ${HOME}/Docker
+
+  redis:
+    user: 1000:1000
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - 6379:6379
+    command:
+      ["redis-server", "--requirepass ${REDIS_PASSWORD}", "--appendonly yes"]
+    volumes:
+      - ./db_data/redis:/data

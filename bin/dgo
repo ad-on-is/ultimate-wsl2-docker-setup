@@ -1,0 +1,10 @@
+#!/bin/bash
+TTY="-it"
+PARAMS="$@"
+
+if [[ $# -gt 0 && "$1" == "notty" ]]; then
+    PARAMS="${@:2}"
+    TTY=""
+fi
+docker run $TTY -w "$PWD" -v /home/add/Go:/home/add/Go golang go $PARAMS
+exit $?
